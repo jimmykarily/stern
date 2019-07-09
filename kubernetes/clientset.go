@@ -29,6 +29,10 @@ import (
 
 // NewClientConfig returns a new Kubernetes client config set for a context
 func NewClientConfig(configPath string, contextName string) clientcmd.ClientConfig {
+	if configPath == "" {
+		return nil
+	}
+
 	configPathList := filepath.SplitList(configPath)
 	configLoadingRules := &clientcmd.ClientConfigLoadingRules{}
 	if len(configPathList) <= 1 {
@@ -47,6 +51,12 @@ func NewClientConfig(configPath string, contextName string) clientcmd.ClientConf
 // NewClientSet returns a new Kubernetes client for a client config
 func NewClientSet(clientConfig clientcmd.ClientConfig) (*kubernetes.Clientset, error) {
 	c, err := clientConfig.ClientConfig()
+	if c == nil {
+		c, err = clientcmd.BuildConfigFromFlags("", "")
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get inClusterConfig")
+		}
+	}
 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client config")
